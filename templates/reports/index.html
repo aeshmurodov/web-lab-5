@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Reports</h1>
+    <ul>
+        <li><a href="{{ url_for('reports.page_report') }}">Page Visit Report</a></li>
+        <li><a href="{{ url_for('reports.user_report') }}">User Visit Report</a></li>
+    </ul>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>User Visit Report</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>User</th>
+                <th>Visit Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user_id, count in user_stats %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ users.get(user_id, "Неаутентифицированный пользователь") if user_id else "Неаутентифицированный пользователь" }}</td>
+                    <td>{{ count }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('reports.user_report_csv') }}">Export to CSV</a>
+{% endblock %}
