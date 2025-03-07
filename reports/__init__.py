@@ -1,5 +1,2 @@
-from flask import Blueprint
-
-reports_bp = Blueprint('reports', __name__, url_prefix='/reports')
-
-from . import views
+from .utils import reports_bp
+from .auth import check_rights

@@ -1,4 +1,4 @@
-import os
+import os # Added import
 from flask import Flask, render_template, request, redirect, url_for, flash, session, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required, UserMixin
@@ -6,12 +6,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from datetime import datetime
 from forms import RegistrationForm, LoginForm, CreateUserForm, EditUserForm, ChangePasswordForm
-from models import User, Role
+from models import User, Role, VisitLog  # Important: Import VisitLog for consistency
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from sqlite3 import dbapi2 as sqlite
 from extensions import db
-from auth import check_rights
+from reports import reports_bp, check_rights  # Import the Blueprint
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -35,7 +35,15 @@ def _set_sqlite_pragma(dbapi_connection, connection_record):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
+@app.before_request
+def log_visit():
+    """Logs every visit to a page."""
+    path = request.path
+    user_id = current_user.is_authenticated and current_user.id or None
+    visit_log = VisitLog(path=path, user_id=user_id)
+    db.session.add(visit_log)
+    db.session.commit()
+    
 # Routes
 @app.route('/')
 def index():
@@ -203,6 +211,7 @@ def initdb():
 
     return "Database initialized (if not already)."
 
+app.register_blueprint(reports_bp)  # Register the Blueprint HERE
 
 
 if __name__ == '__main__':

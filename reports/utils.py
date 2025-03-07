@@ -1,8 +1,7 @@
 from flask import Blueprint, render_template, send_file, request
 from flask_login import login_required, current_user
 from models import VisitLog, User, db
-from app.auth import check_rights
-from app import app
+from .auth import check_rights
 import pandas as pd
 import io
 
@@ -35,14 +34,23 @@ def user_report():
 def page_report_csv():
     page_stats = db.session.query(VisitLog.path, db.func.count(VisitLog.path)).group_by(VisitLog.path).order_by(db.func.count(VisitLog.path).desc()).all()
     df = pd.DataFrame(page_stats, columns=['Page', 'Visit Count'])
-    csv = df.to_csv(index=False)
-    return send_file(io.StringIO(csv), mimetype='text/csv', as_attachment=True, download_name='page_report.csv')
+    csv_buffer = io.BytesIO()  # Use BytesIO for binary data
+    df.to_csv(csv_buffer, index=False, encoding='utf-8') # Specify encoding
+    csv_buffer.seek(0)
+
+    return send_file(
+        csv_buffer,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name='page_report.csv'
+    )
 
 @reports_bp.route('/users/csv')
 @login_required
 @check_rights('Admin')
 def user_report_csv():
-    user_stats = db.session.query(VisitLog.user_id, db.func.count(VisitLog.user_id)).group_by(VisitLog.user_id).order_by(db.func.count(VisitLog.user_id).desc()).all()
+    user_stats = db.session.query(VisitLog.user_id, db.func.count(VisitLog.user_id)).group_by(
+        VisitLog.user_id).order_by(db.func.count(VisitLog.user_id).desc()).all()
     users = {user.id: f"{user.first_name} {user.last_name}" for user in User.query.all()}
     data = []
     for user_id, count in user_stats:
@@ -54,5 +62,13 @@ def user_report_csv():
         data.append({'User': user_name, 'Visit Count': count})
 
     df = pd.DataFrame(data)
-    csv = df.to_csv(index=False)
-    return send_file(io.StringIO(csv), mimetype='text/csv', as_attachment=True, download_name='user_report.csv')
+    csv_buffer = io.BytesIO()  # Use BytesIO for binary data
+    df.to_csv(csv_buffer, index=False, encoding='utf-8')
+    csv_buffer.seek(0)
+
+    return send_file(
+        csv_buffer,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name='user_report.csv'
+    )

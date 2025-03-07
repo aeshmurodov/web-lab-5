@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
+from datetime import datetime
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -26,6 +27,7 @@ class User(UserMixin, db.Model):
         return f'<User {self.username}>'
 
 
+
 class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True, nullable=False)
@@ -33,3 +35,13 @@ class Role(db.Model):
 
     def __repr__(self):
         return f'<Role {self.name}>'
+
+class VisitLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    path = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User', backref=db.backref('visits', lazy=True))
+
+    def __repr__(self):
+        return f'<VisitLog {self.path} by {self.user_id}>'
